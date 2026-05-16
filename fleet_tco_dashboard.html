@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet TCO Dashboard — Q2 2025</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0f1a;
+  --surface: #121826;
+  --surface2: #1a2236;
+  --surface3: #212d45;
+  --border: rgba(255,255,255,0.07);
+  --accent: #00d4aa;
+  --accent2: #3b82f6;
+  --accent3: #f59e0b;
+  --danger: #ef4444;
+  --warn: #f97316;
+  --text: #e8edf5;
+  --text2: #8b9ab5;
+  --text3: #4a5a78;
+  --lease-c: #3b82f6;
+  --fuel-c: #f59e0b;
+  --ws-c: #a855f7;
+  --fine-c: #ef4444;
+  --ekm-c: #f97316;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── TOP NAV ── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;height:56px;
+  background:rgba(11,15,26,0.92);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.logo{font-family:'DM Serif Display',serif;font-size:1.15rem;letter-spacing:.02em;color:var(--text)}
+.logo span{color:var(--accent)}
+.nav-tabs{display:flex;gap:.25rem}
+.nav-tab{
+  padding:.35rem .9rem;border-radius:6px;cursor:pointer;font-size:.82rem;font-weight:500;
+  color:var(--text2);transition:all .18s;border:1px solid transparent;background:none;
+}
+.nav-tab:hover{color:var(--text);background:var(--surface2)}
+.nav-tab.active{color:var(--accent);background:rgba(0,212,170,.08);border-color:rgba(0,212,170,.2)}
+.period-badge{
+  font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text2);
+  border:1px solid var(--border);padding:.25rem .7rem;border-radius:20px;
+}
+
+/* ── LAYOUT ── */
+main{padding:1.5rem 2rem 3rem}
+.page{display:none}.page.active{display:block}
+.section-title{
+  font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--text);
+  margin-bottom:1.5rem;display:flex;align-items:baseline;gap:.75rem;
+}
+.section-title small{font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:400;color:var(--text2)}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1.2rem 1.4rem;position:relative;overflow:hidden;
+  transition:transform .2s,border-color .2s;
+}
+.kpi-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.12)}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent-c,var(--accent));
+}
+.kpi-label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:.5rem}
+.kpi-value{font-family:'DM Mono',monospace;font-size:1.65rem;font-weight:500;color:var(--text);line-height:1}
+.kpi-value.big{font-size:2rem}
+.kpi-sub{font-size:.72rem;color:var(--text3);margin-top:.4rem}
+.kpi-alert{--accent-c:var(--danger)}
+.kpi-warn{--accent-c:var(--warn)}
+.kpi-ok{--accent-c:var(--accent)}
+.kpi-blue{--accent-c:var(--accent2)}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.charts-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem}
+.chart-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem;
+}
+.chart-card.full{grid-column:1/-1}
+.chart-title{font-size:.75rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text2);margin-bottom:1rem}
+canvas{width:100%!important}
+
+/* ── ALERTS ── */
+.alerts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
+.alert-item{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:.9rem 1rem;display:flex;gap:.75rem;align-items:flex-start;
+}
+.alert-icon{font-size:1.1rem;margin-top:.05rem;flex-shrink:0}
+.alert-title{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:.2rem}
+.alert-body{font-size:.72rem;color:var(--text2);line-height:1.5}
+.alert-danger{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.05)}
+.alert-warn{border-color:rgba(249,115,22,.25);background:rgba(249,115,22,.05)}
+.alert-info{border-color:rgba(59,130,246,.25);background:rgba(59,130,246,.05)}
+
+/* ── TABLE ── */
+.table-controls{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.filter-btn{
+  padding:.35rem .9rem;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text2);font-size:.78rem;font-weight:500;
+  cursor:pointer;transition:all .18s;font-family:'Outfit',sans-serif;
+}
+.filter-btn:hover,.filter-btn.active{
+  background:rgba(0,212,170,.08);border-color:rgba(0,212,170,.3);color:var(--accent)
+}
+.sort-select{
+  padding:.35rem .75rem;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);font-size:.78rem;font-family:'Outfit',sans-serif;
+  cursor:pointer;outline:none;
+}
+.search-box{
+  padding:.35rem .75rem;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--text);font-size:.78rem;font-family:'Outfit',sans-serif;
+  outline:none;width:180px;
+}
+.search-box::placeholder{color:var(--text3)}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{
+  background:var(--surface2);padding:.7rem .9rem;text-align:left;
+  font-size:.68rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text2);white-space:nowrap;cursor:pointer;user-select:none;
+  border-bottom:1px solid var(--border);
+}
+thead th:hover{color:var(--text)}
+thead th .sort-arrow{margin-left:.3rem;opacity:.4}
+thead th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:hover{background:var(--surface2)}
+tbody tr:last-child{border-bottom:none}
+td{padding:.65rem .9rem;color:var(--text);white-space:nowrap}
+td.mono{font-family:'DM Mono',monospace;font-size:.75rem}
+.badge{
+  display:inline-flex;align-items:center;padding:.15rem .5rem;border-radius:4px;
+  font-size:.68rem;font-weight:600;letter-spacing:.04em;
+}
+.badge-furgone{background:rgba(59,130,246,.15);color:#93c5fd}
+.badge-auto{background:rgba(168,85,247,.15);color:#c4b5fd}
+.badge-ok{background:rgba(0,212,170,.12);color:var(--accent)}
+.badge-warn{background:rgba(249,115,22,.15);color:#fb923c}
+.badge-danger{background:rgba(239,68,68,.15);color:#fca5a5}
+.cost-bar-wrap{display:flex;align-items:center;gap:.5rem}
+.cost-bar{height:4px;border-radius:2px;background:var(--accent);min-width:2px;transition:width .3s}
+.stars{color:var(--accent3);font-size:.75rem}
+
+/* ── PROGRESS RING ── */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.ring-label{font-size:.7rem;color:var(--text2);text-align:center}
+svg.ring{transform:rotate(-90deg)}
+.ring-track{fill:none;stroke:var(--surface3)}
+.ring-fill{fill:none;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+
+/* ── DONUT ── */
+.donut-legend{display:flex;flex-direction:column;gap:.4rem;margin-top:.75rem}
+.legend-item{display:flex;align-items:center;gap:.5rem;font-size:.75rem}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── RANKING ── */
+.ranking-list{display:flex;flex-direction:column;gap:.4rem}
+.rank-item{
+  display:grid;grid-template-columns:1.8rem 1fr auto auto;gap:.5rem;align-items:center;
+  padding:.55rem .75rem;background:var(--surface2);border-radius:8px;
+  border:1px solid var(--border);font-size:.78rem;
+}
+.rank-num{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text3);text-align:right}
+.rank-num.top{color:var(--danger);font-weight:700}
+.rank-plate{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--accent);margin-right:.3rem}
+.rank-model{color:var(--text2)}
+.rank-val{font-family:'DM Mono',monospace;font-weight:500;color:var(--text)}
+.rank-bar-bg{width:80px;height:5px;background:var(--surface3);border-radius:3px}
+.rank-bar-fill{height:5px;border-radius:3px;transition:width .4s}
+
+/* ── SCATTER ── */
+.scatter-wrap{position:relative;height:240px}
+
+/* ── MONTHLY ── */
+.month-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem}
+.month-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem}
+.month-name{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:.75rem}
+.month-total{font-family:'DM Mono',monospace;font-size:1.4rem;color:var(--text);margin-bottom:.5rem}
+.month-breakdown{display:flex;flex-direction:column;gap:.3rem}
+.mb-row{display:flex;align-items:center;gap:.5rem;font-size:.72rem}
+.mb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.mb-label{color:var(--text2);flex:1}
+.mb-val{font-family:'DM Mono',monospace;color:var(--text)}
+.mb-pct{color:var(--text3);font-size:.68rem;width:30px;text-align:right}
+
+/* ── UPTIME ── */
+.uptime-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:.3rem;margin-bottom:1rem}
+.uptime-cell{
+  aspect-ratio:1;border-radius:4px;background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:.55rem;
+  font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s;color:var(--text3);
+}
+.uptime-cell:hover{transform:scale(1.15);z-index:5;position:relative}
+.uptime-cell.full{background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.3);color:var(--accent)}
+.uptime-cell.partial{background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.3);color:var(--warn)}
+.uptime-cell.down{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:var(--danger)}
+
+/* ── TOOLTIP ── */
+.tooltip{
+  position:fixed;pointer-events:none;z-index:999;
+  background:var(--surface2);border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;padding:.6rem .9rem;font-size:.75rem;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);max-width:220px;
+  opacity:0;transition:opacity .15s;
+}
+.tooltip.show{opacity:1}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+
+/* ── ANIMATE ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.page.active .kpi-card{animation:fadeUp .35s ease both}
+.page.active .kpi-card:nth-child(1){animation-delay:.05s}
+.page.active .kpi-card:nth-child(2){animation-delay:.1s}
+.page.active .kpi-card:nth-child(3){animation-delay:.15s}
+.page.active .kpi-card:nth-child(4){animation-delay:.2s}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Fleet<span>TCO</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('overview')">Overview</button>
+    <button class="nav-tab" onclick="showPage('vehicles')">Veicoli</button>
+    <button class="nav-tab" onclick="showPage('ranking')">Ranking</button>
+    <button class="nav-tab" onclick="showPage('monthly')">Mensile</button>
+    <button class="nav-tab" onclick="showPage('uptime')">Uptime</button>
+    <button class="nav-tab" onclick="showPage('cfo')">CFO View</button>
+  </div>
+  <div class="period-badge">Q2 2025 · 50 veicoli</div>
+</div>
+
+<main>
+
+<!-- ══════════════════ OVERVIEW ══════════════════ -->
+<div id="page-overview" class="page active">
+  <div class="section-title">Dashboard Flotta <small>Total Cost of Ownership · Q2 2025</small></div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-label">TCO Trimestrale</div>
+      <div class="kpi-value big">€ 113.0K</div>
+      <div class="kpi-sub">≈ € 37.7K / mese</div>
+    </div>
+    <div class="kpi-card kpi-ok">
+      <div class="kpi-label">Costo per KM</div>
+      <div class="kpi-value big">40.9 ¢</div>
+      <div class="kpi-sub">275.953 km percorsi</div>
+    </div>
+    <div class="kpi-card kpi-ok">
+      <div class="kpi-label">Uptime Medio Flotta</div>
+      <div class="kpi-value big">99.7%</div>
+      <div class="kpi-sub">15 veicoli in officina</div>
+    </div>
+    <div class="kpi-card kpi-warn">
+      <div class="kpi-label">Veicoli Anomalia</div>
+      <div class="kpi-value big">29</div>
+      <div class="kpi-sub">sforamento km contratto</div>
+    </div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--accent-c:var(--lease-c)">
+      <div class="kpi-label">Leasing</div>
+      <div class="kpi-value">€ 61.058</div>
+      <div class="kpi-sub">54.0% del TCO · + € 3.443 extra km</div>
+    </div>
+    <div class="kpi-card" style="--accent-c:var(--fuel-c)">
+      <div class="kpi-label">Carburante</div>
+      <div class="kpi-value">€ 47.461</div>
+      <div class="kpi-sub">42.0% del TCO</div>
+    </div>
+    <div class="kpi-card" style="--accent-c:var(--ws-c)">
+      <div class="kpi-label">Officina</div>
+      <div class="kpi-value">€ 4.069</div>
+      <div class="kpi-sub">3.6% del TCO · 15 interventi</div>
+    </div>
+    <div class="kpi-card kpi-alert">
+      <div class="kpi-label">Contravvenzioni</div>
+      <div class="kpi-value">€ 410</div>
+      <div class="kpi-sub">5 veicoli · 10% flotta</div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="alerts-grid">
+    <div class="alert-item alert-danger">
+      <div class="alert-icon">🚨</div>
+      <div><div class="alert-title">Sforamento KM — 29 veicoli</div>
+      <div class="alert-body">58% della flotta ha superato i 2.000 km/mese contrattuali. Costo extra: € 3.443. Verificare con la società di leasing la rinegoziazione del contratto.</div></div>
+    </div>
+    <div class="alert-item alert-warn">
+      <div class="alert-icon">⚠️</div>
+      <div><div class="alert-title">Costo/km elevato — 5 veicoli &gt; 60¢</div>
+      <div class="alert-body">Toyota Proace (67.5¢), Mercedes C200d (65.7¢), Peugeot 508 (60.6¢), VW Crafter (59.0¢), Nissan Qashqai (58.5¢). Analisi urgente raccomandabile.</div></div>
+    </div>
+    <div class="alert-item alert-warn">
+      <div class="alert-icon">🔧</div>
+      <div><div class="alert-title">Manutenzioni eccezionali — 6 veicoli</div>
+      <div class="alert-body">GH111AB Vito (€610), RM333MN Audi A4 (€360), RM777UV Mondeo (€439), GH444GH Proace (€451). Picco di costi officina su veicoli 2019-2021.</div></div>
+    </div>
+    <div class="alert-item alert-danger">
+      <div class="alert-icon">🚔</div>
+      <div><div class="alert-title">Contravvenzioni — FL159YZ, TO808QR</div>
+      <div class="alert-body">Renault Master (3 verbali · €123) e Ford Kuga (3 verbali · €123) sono i veicoli più sanzionati. Intervento disciplinare raccomandato.</div></div>
+    </div>
+    <div class="alert-item alert-info">
+      <div class="alert-icon">⭐</div>
+      <div><div class="alert-title">Migliori TCO — Auto piccole</div>
+      <div class="alert-body">Fiat Panda MM100OP: €939 totale, 21¢/km. Opel Corsa MM600YZ: €1.225. Dacia Sandero: 21¢/km. Candidati a replacement del segmento superiore.</div></div>
+    </div>
+    <div class="alert-item alert-info">
+      <div class="alert-icon">📊</div>
+      <div><div class="alert-title">Andamento mensile — Maggio picco</div>
+      <div class="alert-body">Maggio registra il TCO mensile massimo (€39.5K) per il picco carburante (+14% vs Aprile). Giugno si attesta a €36.2K, ottimo segnale di normalizzazione.</div></div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Composizione TCO per voce</div>
+      <canvas id="donutChart" height="200"></canvas>
+      <div class="donut-legend" id="donutLegend"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">TCO mensile — andamento per voce</div>
+      <canvas id="barMonthly" height="200"></canvas>
+    </div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Distribuzione costo/km per veicolo</div>
+      <canvas id="histCpk" height="180"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">TCO per categoria (Furgoni vs Auto)</div>
+      <canvas id="barCategory" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ VEHICLES ══════════════════ -->
+<div id="page-vehicles" class="page">
+  <div class="section-title">Registro Veicoli <small>tutte le voci di costo per veicolo</small></div>
+  <div class="table-controls">
+    <button class="filter-btn active" onclick="filterTable('all',this)">Tutti (50)</button>
+    <button class="filter-btn" onclick="filterTable('Furgone',this)">Furgoni (20)</button>
+    <button class="filter-btn" onclick="filterTable('Auto',this)">Auto (30)</button>
+    <button class="filter-btn" onclick="filterTable('fine',this)">Con multa</button>
+    <button class="filter-btn" onclick="filterTable('workshop',this)">In officina</button>
+    <button class="filter-btn" onclick="filterTable('overmileage',this)">Extra KM</button>
+    <select class="sort-select" id="tableSort" onchange="sortTable(this.value)">
+      <option value="tco-desc">TCO ↓</option>
+      <option value="tco-asc">TCO ↑</option>
+      <option value="cpk-desc">€/km ↓</option>
+      <option value="cpk-asc">€/km ↑</option>
+      <option value="fuel-desc">Carburante ↓</option>
+      <option value="lease-desc">Leasing ↓</option>
+      <option value="fines-desc">Multe ↓</option>
+      <option value="uptime-asc">Uptime ↑</option>
+    </select>
+    <input class="search-box" id="tableSearch" placeholder="Cerca targa o modello…" oninput="renderTable()">
+  </div>
+  <div class="table-wrap">
+    <table id="vehicleTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable('plate')">Targa <span class="sort-arrow">↕</span></th>
+          <th>Modello</th>
+          <th>Cat.</th>
+          <th onclick="sortTable('lease-desc')">Leasing <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable('fuel-desc')">Carburante <span class="sort-arrow">↕</span></th>
+          <th>Officina</th>
+          <th>Multe</th>
+          <th onclick="sortTable('tco-desc')">TCO Trim. <span class="sort-arrow">↕</span></th>
+          <th onclick="sortTable('cpk-desc')">¢/km <span class="sort-arrow">↕</span></th>
+          <th>€/mese</th>
+          <th>Uptime</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="vehicleTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════ RANKING ══════════════════ -->
+<div id="page-ranking" class="page">
+  <div class="section-title">Ranking Veicoli <small>analisi comparativa per KPI</small></div>
+  <div class="table-controls" style="margin-bottom:1.5rem">
+    <button class="filter-btn active" onclick="setRankMetric('tco',this)">Top TCO</button>
+    <button class="filter-btn" onclick="setRankMetric('cpk',this)">Top €/km</button>
+    <button class="filter-btn" onclick="setRankMetric('fuel',this)">Top Carburante</button>
+    <button class="filter-btn" onclick="setRankMetric('lease',this)">Top Leasing</button>
+    <button class="filter-btn" onclick="setRankMetric('workshop',this)">Top Officina</button>
+    <button class="filter-btn" onclick="setRankMetric('fines',this)">Top Multe</button>
+    <button class="filter-btn" onclick="setRankMetric('tco-asc',this)">Migliori TCO</button>
+    <button class="filter-btn" onclick="setRankMetric('cpk-asc',this)">Migliori €/km</button>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title" id="rankChartTitle">Top 10 per TCO</div>
+      <canvas id="rankChart" height="280"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Lista ranking</div>
+      <div class="ranking-list" id="rankingList"></div>
+    </div>
+  </div>
+  <div class="charts-row" style="margin-top:.5rem">
+    <div class="chart-card full">
+      <div class="chart-title">Scatter: km percorsi vs costo/km — dimensione = TCO totale</div>
+      <canvas id="scatterChart" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MONTHLY ══════════════════ -->
+<div id="page-monthly" class="page">
+  <div class="section-title">Confronto Mensile <small>Aprile · Maggio · Giugno 2025</small></div>
+  <div class="month-compare" id="monthCards"></div>
+  <div class="charts-row">
+    <div class="chart-card full">
+      <div class="chart-title">Andamento costi mensili per voce (€)</div>
+      <canvas id="lineMonthly" height="200"></canvas>
+    </div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Composizione % per mese</div>
+      <canvas id="stackedPct" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">KPI mensili sintetici</div>
+      <canvas id="kpiLine" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ UPTIME ══════════════════ -->
+<div id="page-uptime" class="page">
+  <div class="section-title">Uptime & Disponibilità <small>giorni fermo per officina · Q2 2025</small></div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem">
+    <div class="kpi-card kpi-ok"><div class="kpi-label">Uptime medio</div><div class="kpi-value big">99.7%</div><div class="kpi-sub">flotta 50 veicoli</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-label">Veicoli fermi</div><div class="kpi-value big">15</div><div class="kpi-sub">almeno 1 giorno in officina</div></div>
+    <div class="kpi-card"><div class="kpi-label" style="--accent-c:var(--ws-c)">Giorni persi totali</div><div class="kpi-value big">15</div><div class="kpi-sub">su 4.500 giorno-veicolo</div></div>
+    <div class="kpi-card kpi-ok"><div class="kpi-label">Fleet Availability</div><div class="kpi-value big">99.7%</div><div class="kpi-sub">benchmark settore: 96%</div></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:1rem">
+    <div class="chart-title">Heatmap disponibilità flotta — verde=operativo / arancio=parziale / rosso=fermo</div>
+    <div class="uptime-grid" id="uptimeGrid"></div>
+    <div style="display:flex;gap:1.5rem;margin-top:.75rem">
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text2)"><div style="width:10px;height:10px;border-radius:3px;background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.3)"></div>Operativo 100%</div>
+      <div style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text2)"><div style="width:10px;height:10px;border-radius:3px;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3)"></div>1 giorno fermo</div>
+    </div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Tipi intervento officina</div>
+      <canvas id="wsTypeChart" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Costo officina per veicolo (fermi)</div>
+      <canvas id="wsCostChart" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ CFO VIEW ══════════════════ -->
+<div id="page-cfo" class="page">
+  <div class="section-title">CFO & CEO View <small>KPI strategici · proiezioni annuali · benchmark</small></div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi-card kpi-blue"><div class="kpi-label">TCO annuale stimato</div><div class="kpi-value big">€ 452K</div><div class="kpi-sub">proiezione 4 trimestri</div></div>
+    <div class="kpi-card kpi-blue"><div class="kpi-label">Costo medio per veicolo/anno</div><div class="kpi-value big">€ 9.040</div><div class="kpi-sub">vs benchmark: € 8.500</div></div>
+    <div class="kpi-card kpi-warn"><div class="kpi-label">Extra KM annuale stimato</div><div class="kpi-value big">€ 13.8K</div><div class="kpi-sub">29 veicoli · rinegoziare contratto</div></div>
+    <div class="kpi-card kpi-ok"><div class="kpi-label">ROI flotta/km</div><div class="kpi-value big">40.9¢</div><div class="kpi-sub">target settore: 38-45¢/km</div></div>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi-card" style="--accent-c:var(--lease-c)"><div class="kpi-label">Peso Leasing su TCO</div><div class="kpi-value">54.0%</div><div class="kpi-sub">best practice: 50-60%</div></div>
+    <div class="kpi-card" style="--accent-c:var(--fuel-c)"><div class="kpi-label">Peso Carburante su TCO</div><div class="kpi-value">42.0%</div><div class="kpi-sub">benchmark: 30-40% ⚠</div></div>
+    <div class="kpi-card" style="--accent-c:var(--ws-c)"><div class="kpi-label">Peso Officina su TCO</div><div class="kpi-value">3.6%</div><div class="kpi-sub">benchmark: 5-10% ✓ ottimo</div></div>
+    <div class="kpi-card kpi-ok"><div class="kpi-label">Uptime vs benchmark</div><div class="kpi-value">+3.7%</div><div class="kpi-sub">99.7% vs 96% settore</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Benchmark composizione TCO — Flotta vs Settore</div>
+      <canvas id="benchmarkChart" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Proiezione costi annuali per voce (€K)</div>
+      <canvas id="projectionChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card full">
+      <div class="chart-title">Analisi TCO per anno immatricolazione — efficienza della flotta per vintage</div>
+      <canvas id="vintageChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-top:1rem">
+    <div class="chart-title">Raccomandazioni strategiche</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:.25rem">
+      <div class="alert-item alert-warn">
+        <div class="alert-icon">📋</div>
+        <div><div class="alert-title">Rinegoziare contratti leasing</div>
+        <div class="alert-body">29 veicoli (58%) sforano il limite km. Rinegoziare a 2.500 km/mese ridurrebbe gli extra di circa €3.4K/trimestre (€13.8K/anno).</div></div>
+      </div>
+      <div class="alert-item alert-info">
+        <div class="alert-icon">⛽</div>
+        <div><div class="alert-title">Ottimizzare consumi carburante</div>
+        <div class="alert-body">Il carburante pesa il 42% del TCO vs benchmark 30-40%. Introduzione di policy di guida efficiente potrebbe ridurre del 5-8% (€2.4-3.8K/trim).</div></div>
+      </div>
+      <div class="alert-item alert-info">
+        <div class="alert-icon">🚗</div>
+        <div><div class="alert-title">Review veicoli premium</div>
+        <div class="alert-body">BMW 318d, Audi A4, Mercedes C200d hanno costi medi 3× superiori alle auto di segmento medio. Valutare downgrade al rinnovo contratto (2023-2024).</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const DATA = {"kpis": {"total_tco": 112997.14, "total_km": 275953, "avg_uptime": 99.7, "avg_cost_per_km": 40.95, "vehicles_with_fine": 5, "vehicles_with_workshop": 15, "vehicles_overmileage": 29, "fleet_size": 50, "avg_tco_per_vehicle": 2259.94, "total_fuel": 47460.52, "total_leasing": 61057.92, "total_workshop": 4068.7, "total_fines": 410.0, "total_extra_km": 3442.92}, "vehicles": [{"plate": "FL123AB", "model": "Fiat Dobl\u00f2 Cargo 1.6 MJT", "year": 2021, "type": "Furgone", "canone": 320.0, "lease_total": 1174.92, "canone_total": 960.0, "extra_km": 214.92, "km_q2": 7072, "fuel_q1": 717.01, "fuel_liters": 414.21, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1891.93, "cost_per_km": 26.75, "cost_per_month": 630.64, "uptime": 100.0, "days_off": 0}, {"plate": "FL456CD", "model": "Volkswagen Transporter T6 2.0 TDI", "year": 2020, "type": "Furgone", "canone": 480.0, "lease_total": 1465.32, "canone_total": 1440.0, "extra_km": 25.32, "km_q2": 5111, "fuel_q1": 839.62, "fuel_liters": 493.28, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2304.94, "cost_per_km": 45.1, "cost_per_month": 768.31, "uptime": 100.0, "days_off": 0}, {"plate": "FL789EF", "model": "Ford Transit Custom 2.0 EcoBlue", "year": 2022, "type": "Furgone", "canone": 440.0, "lease_total": 1320.0, "canone_total": 1320.0, "extra_km": 0, "km_q2": 5301, "fuel_q1": 1169.94, "fuel_liters": 675.92, "workshop": 262.3, "ws_count": 1, "ws_types": ["Tagliando"], "fines": 0, "fine_count": 0, "tco": 2752.24, "cost_per_km": 51.92, "cost_per_month": 917.41, "uptime": 98.9, "days_off": 1}, {"plate": "FL321GH", "model": "Renault Trafic 1.6 dCi", "year": 2019, "type": "Furgone", "canone": 370.0, "lease_total": 1110.0, "canone_total": 1110.0, "extra_km": 0, "km_q2": 5085, "fuel_q1": 1071.39, "fuel_liters": 617.82, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2181.39, "cost_per_km": 42.9, "cost_per_month": 727.13, "uptime": 100.0, "days_off": 0}, {"plate": "FL654IJ", "model": "Fiat Fiorino 1.3 MJT", "year": 2021, "type": "Furgone", "canone": 230.0, "lease_total": 762.84, "canone_total": 690.0, "extra_km": 72.84, "km_q2": 5362, "fuel_q1": 1237.1, "fuel_liters": 713.2, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1999.94, "cost_per_km": 37.3, "cost_per_month": 666.65, "uptime": 100.0, "days_off": 0}, {"plate": "FL987KL", "model": "Mercedes-Benz Sprinter 314 CDI", "year": 2020, "type": "Furgone", "canone": 620.0, "lease_total": 2057.04, "canone_total": 1860.0, "extra_km": 197.04, "km_q2": 6915, "fuel_q1": 988.06, "fuel_liters": 575.73, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 41.0, "fine_count": 1, "tco": 3086.1, "cost_per_km": 44.63, "cost_per_month": 1028.7, "uptime": 100.0, "days_off": 0}, {"plate": "FL147MN", "model": "Peugeot Partner 1.5 BlueHDi", "year": 2022, "type": "Furgone", "canone": 280.0, "lease_total": 864.48, "canone_total": 840.0, "extra_km": 24.48, "km_q2": 5306, "fuel_q1": 1217.28, "fuel_liters": 708.82, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2081.76, "cost_per_km": 39.23, "cost_per_month": 693.92, "uptime": 100.0, "days_off": 0}, {"plate": "FL258OP", "model": "Citro\u00ebn Berlingo 1.5 BlueHDi", "year": 2021, "type": "Furgone", "canone": 275.0, "lease_total": 850.8, "canone_total": 825.0, "extra_km": 25.8, "km_q2": 5672, "fuel_q1": 1141.79, "fuel_liters": 664.28, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1992.59, "cost_per_km": 35.13, "cost_per_month": 664.2, "uptime": 100.0, "days_off": 0}, {"plate": "FL369QR", "model": "Opel Vivaro 1.5 CDTI", "year": 2020, "type": "Furgone", "canone": 390.0, "lease_total": 1335.84, "canone_total": 1170.0, "extra_km": 165.84, "km_q2": 6107, "fuel_q1": 703.65, "fuel_liters": 406.99, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2039.49, "cost_per_km": 33.4, "cost_per_month": 679.83, "uptime": 100.0, "days_off": 0}, {"plate": "FL741ST", "model": "Ford Transit 2.0 EcoBlue 130", "year": 2019, "type": "Furgone", "canone": 430.0, "lease_total": 1290.0, "canone_total": 1290.0, "extra_km": 0, "km_q2": 4615, "fuel_q1": 1154.54, "fuel_liters": 670.05, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 82.0, "fine_count": 2, "tco": 2526.54, "cost_per_km": 54.75, "cost_per_month": 842.18, "uptime": 100.0, "days_off": 0}, {"plate": "FL852UV", "model": "Volkswagen Caddy 2.0 TDI", "year": 2022, "type": "Furgone", "canone": 340.0, "lease_total": 1331.4, "canone_total": 1020.0, "extra_km": 311.4, "km_q2": 8298, "fuel_q1": 672.85, "fuel_liters": 388.26, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2004.25, "cost_per_km": 24.15, "cost_per_month": 668.08, "uptime": 100.0, "days_off": 0}, {"plate": "FL963WX", "model": "Fiat Ducato 2.3 MJT 140", "year": 2021, "type": "Furgone", "canone": 410.0, "lease_total": 1230.0, "canone_total": 1230.0, "extra_km": 0, "km_q2": 4874, "fuel_q1": 1060.16, "fuel_liters": 612.13, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2290.16, "cost_per_km": 46.99, "cost_per_month": 763.39, "uptime": 100.0, "days_off": 0}, {"plate": "FL159YZ", "model": "Renault Master 2.3 dCi", "year": 2020, "type": "Furgone", "canone": 460.0, "lease_total": 1380.0, "canone_total": 1380.0, "extra_km": 0, "km_q2": 5113, "fuel_q1": 1000.45, "fuel_liters": 577.48, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 123.0, "fine_count": 3, "tco": 2503.45, "cost_per_km": 48.96, "cost_per_month": 834.48, "uptime": 100.0, "days_off": 0}, {"plate": "GH111AB", "model": "Mercedes-Benz Vito 114 CDI", "year": 2021, "type": "Furgone", "canone": 550.0, "lease_total": 1705.44, "canone_total": 1650.0, "extra_km": 55.44, "km_q2": 6194, "fuel_q1": 980.4, "fuel_liters": 568.16, "workshop": 610.0, "ws_count": 1, "ws_types": ["Manutenzione"], "fines": 0, "fine_count": 0, "tco": 3295.84, "cost_per_km": 53.21, "cost_per_month": 1098.61, "uptime": 98.9, "days_off": 1}, {"plate": "GH222CD", "model": "Iveco Daily 35S14", "year": 2019, "type": "Furgone", "canone": 490.0, "lease_total": 1612.08, "canone_total": 1470.0, "extra_km": 142.08, "km_q2": 5795, "fuel_q1": 812.8, "fuel_liters": 469.73, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2424.88, "cost_per_km": 41.84, "cost_per_month": 808.29, "uptime": 100.0, "days_off": 0}, {"plate": "GH333EF", "model": "Peugeot Boxer 2.2 BlueHDi", "year": 2020, "type": "Furgone", "canone": 400.0, "lease_total": 1275.12, "canone_total": 1200.0, "extra_km": 75.12, "km_q2": 5945, "fuel_q1": 886.98, "fuel_liters": 511.78, "workshop": 262.3, "ws_count": 1, "ws_types": ["Tagliando"], "fines": 0, "fine_count": 0, "tco": 2424.4, "cost_per_km": 40.78, "cost_per_month": 808.13, "uptime": 98.9, "days_off": 1}, {"plate": "GH444GH", "model": "Toyota Proace 2.0 D-4D", "year": 2022, "type": "Furgone", "canone": 420.0, "lease_total": 1260.0, "canone_total": 1260.0, "extra_km": 0, "km_q2": 4054, "fuel_q1": 1025.07, "fuel_liters": 593.69, "workshop": 451.4, "ws_count": 1, "ws_types": ["Manutenzione"], "fines": 0, "fine_count": 0, "tco": 2736.47, "cost_per_km": 67.5, "cost_per_month": 912.16, "uptime": 98.9, "days_off": 1}, {"plate": "GH555IJ", "model": "Nissan NV300 1.6 dCi", "year": 2021, "type": "Furgone", "canone": 360.0, "lease_total": 1151.64, "canone_total": 1080.0, "extra_km": 71.64, "km_q2": 5398, "fuel_q1": 920.47, "fuel_liters": 537.29, "workshop": 237.9, "ws_count": 1, "ws_types": ["Manutenzione"], "fines": 0, "fine_count": 0, "tco": 2310.01, "cost_per_km": 42.79, "cost_per_month": 770.0, "uptime": 98.9, "days_off": 1}, {"plate": "GH666KL", "model": "Volkswagen Crafter 2.0 TDI", "year": 2020, "type": "Furgone", "canone": 530.0, "lease_total": 1590.0, "canone_total": 1590.0, "extra_km": 0, "km_q2": 4794, "fuel_q1": 975.58, "fuel_liters": 566.3, "workshop": 262.3, "ws_count": 1, "ws_types": ["Tagliando"], "fines": 0, "fine_count": 0, "tco": 2827.88, "cost_per_km": 58.99, "cost_per_month": 942.63, "uptime": 98.9, "days_off": 1}, {"plate": "GH777MN", "model": "Fiat Talento 1.6 EcoJet", "year": 2019, "type": "Furgone", "canone": 345.0, "lease_total": 1035.0, "canone_total": 1035.0, "extra_km": 0, "km_q2": 5624, "fuel_q1": 1035.73, "fuel_liters": 604.03, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 41.0, "fine_count": 1, "tco": 2111.73, "cost_per_km": 37.55, "cost_per_month": 703.91, "uptime": 100.0, "days_off": 0}, {"plate": "MM100OP", "model": "Fiat Panda 1.2", "year": 2021, "type": "Auto", "canone": 185.0, "lease_total": 555.0, "canone_total": 555.0, "extra_km": 0, "km_q2": 4467, "fuel_q1": 384.34, "fuel_liters": 208.52, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 939.34, "cost_per_km": 21.03, "cost_per_month": 313.11, "uptime": 100.0, "days_off": 0}, {"plate": "MM200QR", "model": "Volkswagen Golf 1.6 TDI", "year": 2020, "type": "Auto", "canone": 290.0, "lease_total": 898.68, "canone_total": 870.0, "extra_km": 28.68, "km_q2": 5750, "fuel_q1": 1044.68, "fuel_liters": 610.05, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1943.36, "cost_per_km": 33.8, "cost_per_month": 647.79, "uptime": 100.0, "days_off": 0}, {"plate": "MM300ST", "model": "Ford Focus 1.5 EcoBlue", "year": 2022, "type": "Auto", "canone": 305.0, "lease_total": 1084.68, "canone_total": 915.0, "extra_km": 169.68, "km_q2": 6100, "fuel_q1": 899.36, "fuel_liters": 517.74, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1984.04, "cost_per_km": 32.53, "cost_per_month": 661.35, "uptime": 100.0, "days_off": 0}, {"plate": "MM400UV", "model": "Renault Clio 1.5 dCi", "year": 2021, "type": "Auto", "canone": 250.0, "lease_total": 750.0, "canone_total": 750.0, "extra_km": 0, "km_q2": 4587, "fuel_q1": 751.82, "fuel_liters": 434.08, "workshop": 48.8, "ws_count": 1, "ws_types": ["Revisione"], "fines": 0, "fine_count": 0, "tco": 1550.62, "cost_per_km": 33.8, "cost_per_month": 516.87, "uptime": 98.9, "days_off": 1}, {"plate": "MM500WX", "model": "Toyota Yaris 1.5 Hybrid", "year": 2022, "type": "Auto", "canone": 270.0, "lease_total": 880.32, "canone_total": 810.0, "extra_km": 70.32, "km_q2": 5161, "fuel_q1": 566.61, "fuel_liters": 304.76, "workshop": 427.0, "ws_count": 1, "ws_types": ["Tagliando"], "fines": 0, "fine_count": 0, "tco": 1873.93, "cost_per_km": 36.31, "cost_per_month": 624.64, "uptime": 98.9, "days_off": 1}, {"plate": "MM600YZ", "model": "Opel Corsa 1.2 Turbo", "year": 2021, "type": "Auto", "canone": 240.0, "lease_total": 720.0, "canone_total": 720.0, "extra_km": 0, "km_q2": 4332, "fuel_q1": 505.45, "fuel_liters": 273.71, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1225.45, "cost_per_km": 28.29, "cost_per_month": 408.48, "uptime": 100.0, "days_off": 0}, {"plate": "MM700AB", "model": "\u0160koda Octavia 2.0 TDI", "year": 2020, "type": "Auto", "canone": 310.0, "lease_total": 1060.56, "canone_total": 930.0, "extra_km": 130.56, "km_q2": 5906, "fuel_q1": 1027.63, "fuel_liters": 595.66, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2088.19, "cost_per_km": 35.36, "cost_per_month": 696.06, "uptime": 100.0, "days_off": 0}, {"plate": "MM800CD", "model": "Hyundai i30 1.6 CRDi", "year": 2019, "type": "Auto", "canone": 265.0, "lease_total": 972.6, "canone_total": 795.0, "extra_km": 177.6, "km_q2": 6736, "fuel_q1": 837.21, "fuel_liters": 488.85, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1809.81, "cost_per_km": 26.87, "cost_per_month": 603.27, "uptime": 100.0, "days_off": 0}, {"plate": "MM900EF", "model": "Kia Ceed 1.4 T-GDI", "year": 2021, "type": "Auto", "canone": 255.0, "lease_total": 765.0, "canone_total": 765.0, "extra_km": 0, "km_q2": 4876, "fuel_q1": 540.43, "fuel_liters": 290.83, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1305.43, "cost_per_km": 26.77, "cost_per_month": 435.14, "uptime": 100.0, "days_off": 0}, {"plate": "MM010GH", "model": "Dacia Sandero 1.0 TCe", "year": 2022, "type": "Auto", "canone": 195.0, "lease_total": 730.92, "canone_total": 585.0, "extra_km": 145.92, "km_q2": 6389, "fuel_q1": 632.77, "fuel_liters": 340.38, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1363.69, "cost_per_km": 21.34, "cost_per_month": 454.56, "uptime": 100.0, "days_off": 0}, {"plate": "RM111IJ", "model": "Volkswagen Passat 2.0 TDI", "year": 2020, "type": "Auto", "canone": 420.0, "lease_total": 1260.0, "canone_total": 1260.0, "extra_km": 0, "km_q2": 4184, "fuel_q1": 702.76, "fuel_liters": 410.29, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1962.76, "cost_per_km": 46.91, "cost_per_month": 654.25, "uptime": 100.0, "days_off": 0}, {"plate": "RM222KL", "model": "BMW 318d", "year": 2021, "type": "Auto", "canone": 580.0, "lease_total": 1814.52, "canone_total": 1740.0, "extra_km": 74.52, "km_q2": 5448, "fuel_q1": 873.02, "fuel_liters": 506.22, "workshop": 176.9, "ws_count": 1, "ws_types": ["Tagliando"], "fines": 0, "fine_count": 0, "tco": 2864.44, "cost_per_km": 52.58, "cost_per_month": 954.81, "uptime": 98.9, "days_off": 1}, {"plate": "RM333MN", "model": "Audi A4 2.0 TDI", "year": 2020, "type": "Auto", "canone": 610.0, "lease_total": 1870.92, "canone_total": 1830.0, "extra_km": 40.92, "km_q2": 5774, "fuel_q1": 986.03, "fuel_liters": 577.12, "workshop": 359.9, "ws_count": 1, "ws_types": ["Manutenzione"], "fines": 0, "fine_count": 0, "tco": 3216.85, "cost_per_km": 55.71, "cost_per_month": 1072.28, "uptime": 98.9, "days_off": 1}, {"plate": "RM444OP", "model": "Mercedes-Benz Classe C 200d", "year": 2022, "type": "Auto", "canone": 650.0, "lease_total": 1950.0, "canone_total": 1950.0, "extra_km": 0, "km_q2": 4368, "fuel_q1": 920.78, "fuel_liters": 538.78, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2870.78, "cost_per_km": 65.72, "cost_per_month": 956.93, "uptime": 100.0, "days_off": 0}, {"plate": "RM555QR", "model": "Volvo V60 D3", "year": 2021, "type": "Auto", "canone": 540.0, "lease_total": 1775.88, "canone_total": 1620.0, "extra_km": 155.88, "km_q2": 6846, "fuel_q1": 1218.17, "fuel_liters": 705.12, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2994.05, "cost_per_km": 43.73, "cost_per_month": 998.02, "uptime": 100.0, "days_off": 0}, {"plate": "RM666ST", "model": "Toyota Corolla 1.8 Hybrid", "year": 2022, "type": "Auto", "canone": 380.0, "lease_total": 1168.44, "canone_total": 1140.0, "extra_km": 28.44, "km_q2": 5054, "fuel_q1": 473.34, "fuel_liters": 256.62, "workshop": 67.1, "ws_count": 1, "ws_types": ["Revisione"], "fines": 0, "fine_count": 0, "tco": 1708.88, "cost_per_km": 33.81, "cost_per_month": 569.63, "uptime": 98.9, "days_off": 1}, {"plate": "RM777UV", "model": "Ford Mondeo 2.0 EcoBlue", "year": 2019, "type": "Auto", "canone": 370.0, "lease_total": 1302.36, "canone_total": 1110.0, "extra_km": 192.36, "km_q2": 7081, "fuel_q1": 1255.61, "fuel_liters": 724.68, "workshop": 439.2, "ws_count": 1, "ws_types": ["Manutenzione"], "fines": 0, "fine_count": 0, "tco": 2997.17, "cost_per_km": 42.33, "cost_per_month": 999.06, "uptime": 98.9, "days_off": 1}, {"plate": "RM888WX", "model": "\u0160koda Superb 2.0 TDI", "year": 2020, "type": "Auto", "canone": 430.0, "lease_total": 1483.92, "canone_total": 1290.0, "extra_km": 193.92, "km_q2": 6584, "fuel_q1": 1289.48, "fuel_liters": 750.76, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2773.4, "cost_per_km": 42.12, "cost_per_month": 924.47, "uptime": 100.0, "days_off": 0}, {"plate": "RM999YZ", "model": "Peugeot 508 1.5 BlueHDi", "year": 2021, "type": "Auto", "canone": 415.0, "lease_total": 1245.0, "canone_total": 1245.0, "extra_km": 0, "km_q2": 3897, "fuel_q1": 1116.72, "fuel_liters": 646.62, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2361.72, "cost_per_km": 60.6, "cost_per_month": 787.24, "uptime": 100.0, "days_off": 0}, {"plate": "RM010AB", "model": "Citro\u00ebn C5 Aircross 1.5 BlueHDi", "year": 2022, "type": "Auto", "canone": 435.0, "lease_total": 1305.0, "canone_total": 1305.0, "extra_km": 0, "km_q2": 4876, "fuel_q1": 1169.12, "fuel_liters": 677.22, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2474.12, "cost_per_km": 50.74, "cost_per_month": 824.71, "uptime": 100.0, "days_off": 0}, {"plate": "TO101CD", "model": "Renault Megane 1.5 dCi", "year": 2021, "type": "Auto", "canone": 275.0, "lease_total": 956.64, "canone_total": 825.0, "extra_km": 131.64, "km_q2": 5737, "fuel_q1": 1278.97, "fuel_liters": 740.01, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2235.61, "cost_per_km": 38.97, "cost_per_month": 745.2, "uptime": 100.0, "days_off": 0}, {"plate": "TO202EF", "model": "Fiat Tipo 1.6 MJT", "year": 2020, "type": "Auto", "canone": 260.0, "lease_total": 884.76, "canone_total": 780.0, "extra_km": 104.76, "km_q2": 5933, "fuel_q1": 655.06, "fuel_liters": 380.34, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1539.82, "cost_per_km": 25.95, "cost_per_month": 513.27, "uptime": 100.0, "days_off": 0}, {"plate": "TO303GH", "model": "Opel Astra 1.5 CDTI", "year": 2019, "type": "Auto", "canone": 270.0, "lease_total": 810.0, "canone_total": 810.0, "extra_km": 0, "km_q2": 4488, "fuel_q1": 1162.46, "fuel_liters": 675.01, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 1972.46, "cost_per_km": 43.95, "cost_per_month": 657.49, "uptime": 100.0, "days_off": 0}, {"plate": "TO404IJ", "model": "Seat Leon 2.0 TDI", "year": 2021, "type": "Auto", "canone": 295.0, "lease_total": 885.0, "canone_total": 885.0, "extra_km": 0, "km_q2": 5160, "fuel_q1": 1159.61, "fuel_liters": 673.13, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2044.61, "cost_per_km": 39.62, "cost_per_month": 681.54, "uptime": 100.0, "days_off": 0}, {"plate": "TO505KL", "model": "Mazda 6 2.2 Skyactiv-D", "year": 2020, "type": "Auto", "canone": 430.0, "lease_total": 1170.0, "canone_total": 1170.0, "extra_km": 0, "km_q2": 5549, "fuel_q1": 1135.45, "fuel_liters": 658.8, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2305.45, "cost_per_km": 41.55, "cost_per_month": 768.48, "uptime": 100.0, "days_off": 0}, {"plate": "TO606MN", "model": "Honda CR-V 1.6 i-DTEC", "year": 2022, "type": "Auto", "canone": 440.0, "lease_total": 1450.44, "canone_total": 1320.0, "extra_km": 130.44, "km_q2": 6359, "fuel_q1": 1022.64, "fuel_liters": 592.13, "workshop": 189.1, "ws_count": 1, "ws_types": ["Tagliando"], "fines": 0, "fine_count": 0, "tco": 2662.18, "cost_per_km": 41.86, "cost_per_month": 887.39, "uptime": 98.9, "days_off": 1}, {"plate": "TO707OP", "model": "Volkswagen Tiguan 2.0 TDI", "year": 2021, "type": "Auto", "canone": 480.0, "lease_total": 1644.84, "canone_total": 1440.0, "extra_km": 204.84, "km_q2": 6655, "fuel_q1": 970.83, "fuel_liters": 562.8, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 0, "fine_count": 0, "tco": 2615.67, "cost_per_km": 39.3, "cost_per_month": 871.89, "uptime": 100.0, "days_off": 0}, {"plate": "TO808QR", "model": "Ford Kuga 2.0 EcoBlue", "year": 2020, "type": "Auto", "canone": 420.0, "lease_total": 1340.52, "canone_total": 1260.0, "extra_km": 80.52, "km_q2": 6136, "fuel_q1": 1141.18, "fuel_liters": 662.63, "workshop": 0, "ws_count": 0, "ws_types": [], "fines": 123.0, "fine_count": 3, "tco": 2604.7, "cost_per_km": 42.45, "cost_per_month": 868.23, "uptime": 100.0, "days_off": 0}, {"plate": "TO909ST", "model": "Peugeot 3008 1.5 BlueHDi", "year": 2022, "type": "Auto", "canone": 455.0, "lease_total": 1365.0, "canone_total": 1365.0, "extra_km": 0, "km_q2": 4494, "fuel_q1": 782.03, "fuel_liters": 448.23, "workshop": 207.4, "ws_count": 1, "ws_types": ["Manutenzione"], "fines": 0, "fine_count": 0, "tco": 2354.43, "cost_per_km": 52.39, "cost_per_month": 784.81, "uptime": 98.9, "days_off": 1}, {"plate": "TO010UV", "model": "Nissan Qashqai 1.5 dCi", "year": 2021, "type": "Auto", "canone": 385.0, "lease_total": 1155.0, "canone_total": 1155.0, "extra_km": 0, "km_q2": 4391, "fuel_q1": 1346.09, "fuel_liters": 783.22, "workshop": 67.1, "ws_count": 1, "ws_types": ["Revisione"], "fines": 0, "fine_count": 0, "tco": 2568.19, "cost_per_km": 58.49, "cost_per_month": 856.06, "uptime": 98.9, "days_off": 1}], "monthly": [{"month": "Aprile", "leasing": 20370.44, "fuel": 15486.25, "workshop": 1356.23, "fines": 136.67, "total": 37349.59}, {"month": "Maggio", "leasing": 20398.76, "fuel": 17597.33, "workshop": 1356.23, "fines": 136.67, "total": 39488.99}, {"month": "Giugno", "leasing": 20288.72, "fuel": 14376.94, "workshop": 1356.23, "fines": 136.67, "total": 36158.56}]};
+
+// ── Chart.js inline (CDN fallback) ──────────────────────────────────
+const CHART_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+function loadCharts(){
+  const s = document.createElement('script');
+  s.src = CHART_CDN;
+  s.onload = () => { initCharts(); renderTable(); buildMonthCards(); buildUptimeGrid(); };
+  document.head.appendChild(s);
+}
+loadCharts();
+
+// ── Globals ────────────────────────────────────────────────────────
+let chartInstances = {};
+let tableFilter = 'all';
+let tableSort_ = 'tco-desc';
+let rankMetric = 'tco';
+let chartsReady = false;
+
+const C = {
+  lease:'#3b82f6', fuel:'#f59e0b', ws:'#a855f7', fine:'#ef4444', ekm:'#f97316',
+  accent:'#00d4aa', grid:'rgba(255,255,255,0.06)', text:'#8b9ab5'
+};
+const baseOpts = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2236',borderColor:'rgba(255,255,255,.12)',borderWidth:1,titleColor:'#e8edf5',bodyColor:'#8b9ab5',padding:10}},
+  scales:{
+    x:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11,family:'DM Mono'}}},
+    y:{grid:{color:C.grid},ticks:{color:C.text,font:{size:11,family:'DM Mono'}}}
+  }
+};
+
+function mkChart(id, cfg){ 
+  const c = document.getElementById(id);
+  if(!c) return null;
+  if(chartInstances[id]) chartInstances[id].destroy();
+  const inst = new Chart(c, cfg);
+  chartInstances[id] = inst;
+  return inst;
+}
+
+function initCharts(){
+  chartsReady = true;
+  buildOverviewCharts();
+  buildRankingCharts();
+  buildMonthlyCharts();
+  buildUptimeCharts();
+  buildCFOCharts();
+}
+
+// ═══ OVERVIEW CHARTS ═══════════════════════════════════════════════
+function buildOverviewCharts(){
+  // DONUT
+  const donutData = [61057.92, 47460.52, 4068.70, 410.00];
+  const donutLabels = ['Leasing','Carburante','Officina','Multe'];
+  const donutColors = [C.lease, C.fuel, C.ws, C.fine];
+  mkChart('donutChart',{
+    type:'doughnut',
+    data:{labels:donutLabels,datasets:[{data:donutData,backgroundColor:donutColors,borderColor:'#121826',borderWidth:2,hoverOffset:6}]},
+    options:{...baseOpts,
+      cutout:'68%',
+      plugins:{...baseOpts.plugins,legend:{display:false},
+        tooltip:{...baseOpts.plugins.tooltip,
+          callbacks:{label:c=>`${c.label}: € ${c.raw.toLocaleString('it-IT',{minimumFractionDigits:0})} (${(c.raw/112997.14*100).toFixed(1)}%)`}
+        }
+      }
+    }
+  });
+  const leg = document.getElementById('donutLegend');
+  if(leg){
+    const total = 112997.14;
+    leg.innerHTML = donutLabels.map((l,i)=>`
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${donutColors[i]}"></div>
+        <span style="flex:1;color:var(--text2)">${l}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.72rem">€ ${donutData[i].toLocaleString('it-IT',{minimumFractionDigits:0})}</span>
+        <span style="color:var(--text3);font-size:.68rem;width:36px;text-align:right">${(donutData[i]/total*100).toFixed(1)}%</span>
+      </div>`).join('');
+  }
+
+  // STACKED BAR MONTHLY
+  const months = DATA.monthly.map(m=>m.month);
+  mkChart('barMonthly',{
+    type:'bar',
+    data:{labels:months,datasets:[
+      {label:'Leasing',data:DATA.monthly.map(m=>m.leasing),backgroundColor:C.lease+'cc',stack:'a'},
+      {label:'Carburante',data:DATA.monthly.map(m=>m.fuel),backgroundColor:C.fuel+'cc',stack:'a'},
+      {label:'Officina',data:DATA.monthly.map(m=>m.workshop),backgroundColor:C.ws+'cc',stack:'a'},
+      {label:'Multe',data:DATA.monthly.map(m=>m.fines),backgroundColor:C.fine+'cc',stack:'a'},
+    ]},
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{x:{...baseOpts.scales.x,stacked:true},y:{...baseOpts.scales.y,stacked:true,ticks:{...baseOpts.scales.y.ticks,callback:v=>'€'+Math.round(v/1000)+'K'}}}
+    }
+  });
+
+  // HISTOGRAM cost/km
+  const cpks = DATA.vehicles.map(v=>v.cost_per_km);
+  const bins = [[15,25],[25,35],[35,45],[45,55],[55,70]];
+  const binLabels = bins.map(b=>`${b[0]}-${b[1]}¢`);
+  const binCounts = bins.map(b=>cpks.filter(v=>v>=b[0]&&v<b[1]).length);
+  mkChart('histCpk',{
+    type:'bar',
+    data:{labels:binLabels,datasets:[{data:binCounts,backgroundColor:[C.accent+'99',C.accent+'bb',C.fuel+'bb',C.warn+'bb',C.fine+'bb'],borderRadius:4}]},
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,tooltip:{...baseOpts.plugins.tooltip,callbacks:{label:c=>`${c.raw} veicoli`}}},
+      scales:{x:{...baseOpts.scales.x},y:{...baseOpts.scales.y,ticks:{...baseOpts.scales.y.ticks,callback:v=>v+' veic.'}}}
+    }
+  });
+
+  // CATEGORY BAR
+  const furg = DATA.vehicles.filter(v=>v.type==='Furgone');
+  const auto = DATA.vehicles.filter(v=>v.type==='Auto');
+  const sum = (arr,k)=>arr.reduce((a,v)=>a+v[k],0);
+  mkChart('barCategory',{
+    type:'bar',
+    data:{labels:['Furgoni (20)','Auto (30)'],datasets:[
+      {label:'Leasing',data:[sum(furg,'lease_total'),sum(auto,'lease_total')],backgroundColor:C.lease+'cc',borderRadius:4,stack:'s'},
+      {label:'Carburante',data:[sum(furg,'fuel_q1'),sum(auto,'fuel_q1')],backgroundColor:C.fuel+'cc',borderRadius:4,stack:'s'},
+      {label:'Officina',data:[sum(furg,'workshop'),sum(auto,'workshop')],backgroundColor:C.ws+'cc',borderRadius:4,stack:'s'},
+      {label:'Multe',data:[sum(furg,'fines'),sum(auto,'fines')],backgroundColor:C.fine+'cc',borderRadius:4,stack:'s'},
+    ]},
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{x:{...baseOpts.scales.x,stacked:true},y:{...baseOpts.scales.y,stacked:true,ticks:{...baseOpts.scales.y.ticks,callback:v=>'€'+Math.round(v/1000)+'K'}}}
+    }
+  });
+}
+
+// ═══ RANKING CHARTS ════════════════════════════════════════════════
+let rankChart_=null, rankList_=null;
+const rankConfigs = {
+  'tco':   {label:'TCO Trimestrale (€)',key:'tco',       dir:-1,title:'Top 10 per TCO totale'},
+  'cpk':   {label:'Costo / km (¢)',      key:'cost_per_km',dir:-1,title:'Top 10 per costo/km'},
+  'fuel':  {label:'Carburante (€)',      key:'fuel_q1',  dir:-1,title:'Top 10 per spesa carburante'},
+  'lease': {label:'Leasing (€)',         key:'lease_total',dir:-1,title:'Top 10 per costo leasing'},
+  'workshop':{label:'Officina (€)',      key:'workshop', dir:-1,title:'Top 10 per costi officina'},
+  'fines': {label:'Multe (€)',           key:'fines',    dir:-1,title:'Top 10 per contravvenzioni'},
+  'tco-asc':{label:'TCO Trimestrale (€)',key:'tco',      dir:1, title:'Top 10 migliori TCO'},
+  'cpk-asc':{label:'Costo / km (¢)',     key:'cost_per_km',dir:1,title:'Top 10 migliori costo/km'},
+};
+
+function buildRankingCharts(){ setRankMetric('tco'); }
+
+function setRankMetric(m, btn){
+  rankMetric = m;
+  document.querySelectorAll('#page-ranking .filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(!chartsReady) return;
+  const cfg = rankConfigs[m];
+  const sorted = [...DATA.vehicles].sort((a,b)=>cfg.dir*(a[cfg.key]-b[cfg.key]));
+  const top10 = sorted.slice(0,10);
+  const maxVal = Math.max(...top10.map(v=>v[cfg.key]));
+
+  document.getElementById('rankChartTitle').textContent = cfg.title;
+
+  const colors = top10.map((v,i)=>{
+    if(v.fines>0) return C.fine+'cc';
+    if(v.workshop>0) return C.ws+'cc';
+    if(v.extra_km>0) return C.warn+'cc';
+    return (i<3?C.accent:C.accent2)+'99';
+  });
+
+  mkChart('rankChart',{
+    type:'bar',
+    data:{
+      labels:top10.map(v=>v.plate),
+      datasets:[{data:top10.map(v=>v[cfg.key]),backgroundColor:colors,borderRadius:4}]
+    },
+    options:{
+      ...baseOpts,indexAxis:'y',
+      plugins:{...baseOpts.plugins,tooltip:{...baseOpts.plugins.tooltip,callbacks:{
+        title:c=>top10[c[0].dataIndex].model,
+        label:c=>`${cfg.label}: ${m.includes('cpk')?c.raw.toFixed(1)+'¢':'€'+c.raw.toFixed(0)}`
+      }}},
+      scales:{
+        x:{...baseOpts.scales.x,ticks:{...baseOpts.scales.x.ticks,callback:v=>m.includes('cpk')?v+'¢':'€'+Math.round(v)}},
+        y:{...baseOpts.scales.y,ticks:{...baseOpts.scales.y.ticks}}
+      }
+    }
+  });
+
+  // Ranking list
+  const list = document.getElementById('rankingList');
+  if(list){
+    list.innerHTML = top10.slice(0,10).map((v,i)=>{
+      const pct = v[cfg.key]/maxVal*100;
+      const isTop3 = i<3;
+      const barCol = v.fines>0?C.fine:v.workshop>0?C.ws:v.extra_km>0?C.warn:C.accent;
+      const valStr = m.includes('cpk')?`${v[cfg.key].toFixed(1)}¢`:`€ ${v[cfg.key].toFixed(0)}`;
+      return `<div class="rank-item">
+        <div class="rank-num ${isTop3?'top':''}">${i+1}</div>
+        <div><span class="rank-plate">${v.plate}</span><span class="rank-model">${v.model.split(' ').slice(0,2).join(' ')}</span></div>
+        <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:${pct}%;background:${barCol}"></div></div>
+        <div class="rank-val">${valStr}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Scatter
+  mkChart('scatterChart',{
+    type:'scatter',
+    data:{datasets:[
+      {label:'Furgone',data:DATA.vehicles.filter(v=>v.type==='Furgone').map(v=>({x:v.km_q2,y:v.cost_per_km,r:Math.sqrt(v.tco/100),plate:v.plate,model:v.model})),
+       backgroundColor:C.accent2+'88',pointRadius:6,pointHoverRadius:9},
+      {label:'Auto',data:DATA.vehicles.filter(v=>v.type==='Auto').map(v=>({x:v.km_q2,y:v.cost_per_km,r:Math.sqrt(v.tco/100),plate:v.plate,model:v.model})),
+       backgroundColor:C.ws+'88',pointRadius:6,pointHoverRadius:9},
+    ]},
+    options:{
+      ...baseOpts,
+      plugins:{...baseOpts.plugins,
+        legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}},
+        tooltip:{...baseOpts.plugins.tooltip,callbacks:{
+          title:c=>`${c[0].raw.plate} – ${c[0].raw.model}`,
+          label:c=>`KM: ${c.raw.x.toLocaleString('it-IT')}  |  ¢/km: ${c.raw.y.toFixed(1)}`
+        }}
+      },
+      scales:{
+        x:{...baseOpts.scales.x,title:{display:true,text:'KM percorsi Q2',color:C.text},ticks:{...baseOpts.scales.x.ticks,callback:v=>v.toLocaleString('it-IT')}},
+        y:{...baseOpts.scales.y,title:{display:true,text:'Costo/km (¢)',color:C.text}}
+      }
+    }
+  });
+}
+
+// ═══ MONTHLY CHARTS ════════════════════════════════════════════════
+function buildMonthCards(){
+  const el = document.getElementById('monthCards');
+  if(!el) return;
+  const dotColors = {leasing:C.lease,fuel:C.fuel,workshop:C.ws,fines:C.fine};
+  const dotLabels = {leasing:'Leasing',fuel:'Carburante',workshop:'Officina',fines:'Multe'};
+  el.innerHTML = DATA.monthly.map((m,i)=>{
+    const prev = i>0?DATA.monthly[i-1].total:null;
+    const delta = prev?((m.total-prev)/prev*100):null;
+    const arrow = delta===null?'':delta>0?`<span style="color:var(--warn)">▲ ${delta.toFixed(1)}%</span>`:`<span style="color:var(--accent)">▼ ${Math.abs(delta).toFixed(1)}%</span>`;
+    return `<div class="month-card">
+      <div class="month-name">${m.month} 2025 ${arrow}</div>
+      <div class="month-total">€ ${m.total.toLocaleString('it-IT',{minimumFractionDigits:0})}</div>
+      <div class="month-breakdown">
+        ${Object.entries(dotColors).map(([k,c])=>`
+          <div class="mb-row">
+            <div class="mb-dot" style="background:${c}"></div>
+            <span class="mb-label">${dotLabels[k]}</span>
+            <span class="mb-val">€ ${m[k].toLocaleString('it-IT',{minimumFractionDigits:0})}</span>
+            <span class="mb-pct">${(m[k]/m.total*100).toFixed(0)}%</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildMonthlyCharts(){
+  const months = DATA.monthly.map(m=>m.month);
+  mkChart('lineMonthly',{
+    type:'line',
+    data:{labels:months,datasets:[
+      {label:'Leasing',data:DATA.monthly.map(m=>m.leasing),borderColor:C.lease,backgroundColor:C.lease+'22',fill:true,tension:.3,pointRadius:5},
+      {label:'Carburante',data:DATA.monthly.map(m=>m.fuel),borderColor:C.fuel,backgroundColor:C.fuel+'22',fill:true,tension:.3,pointRadius:5},
+      {label:'Officina',data:DATA.monthly.map(m=>m.workshop),borderColor:C.ws,backgroundColor:C.ws+'22',fill:true,tension:.3,pointRadius:5},
+      {label:'Totale',data:DATA.monthly.map(m=>m.total),borderColor:C.accent,borderDash:[4,4],fill:false,tension:.3,pointRadius:5,borderWidth:2},
+    ]},
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{x:{...baseOpts.scales.x},y:{...baseOpts.scales.y,ticks:{...baseOpts.scales.y.ticks,callback:v=>'€'+Math.round(v/1000)+'K'}}}
+    }
+  });
+
+  mkChart('stackedPct',{
+    type:'bar',
+    data:{labels:months,datasets:[
+      {label:'Leasing',data:DATA.monthly.map(m=>+(m.leasing/m.total*100).toFixed(1)),backgroundColor:C.lease+'cc',stack:'s'},
+      {label:'Carburante',data:DATA.monthly.map(m=>+(m.fuel/m.total*100).toFixed(1)),backgroundColor:C.fuel+'cc',stack:'s'},
+      {label:'Officina',data:DATA.monthly.map(m=>+(m.workshop/m.total*100).toFixed(1)),backgroundColor:C.ws+'cc',stack:'s'},
+      {label:'Multe',data:DATA.monthly.map(m=>+(m.fines/m.total*100).toFixed(1)),backgroundColor:C.fine+'cc',stack:'s'},
+    ]},
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{x:{...baseOpts.scales.x,stacked:true},y:{...baseOpts.scales.y,stacked:true,max:100,ticks:{...baseOpts.scales.y.ticks,callback:v=>v+'%'}}}
+    }
+  });
+
+  mkChart('kpiLine',{
+    type:'line',
+    data:{labels:months,datasets:[
+      {label:'TCO totale (€K)',data:DATA.monthly.map(m=>+(m.total/1000).toFixed(1)),borderColor:C.accent,fill:false,tension:.3,pointRadius:6,yAxisID:'y'},
+      {label:'TCO medio/veic (€)',data:DATA.monthly.map(m=>+(m.total/50).toFixed(0)),borderColor:C.fuel,fill:false,tension:.3,pointRadius:6,yAxisID:'y1'},
+    ]},
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{
+        x:{...baseOpts.scales.x},
+        y:{...baseOpts.scales.y,position:'left',ticks:{...baseOpts.scales.y.ticks,callback:v=>v+'K'}},
+        y1:{...baseOpts.scales.y,position:'right',grid:{display:false},ticks:{...baseOpts.scales.y.ticks,callback:v=>'€'+v}},
+      }
+    }
+  });
+}
+
+// ═══ UPTIME CHARTS ════════════════════════════════════════════════
+function buildUptimeGrid(){
+  const grid = document.getElementById('uptimeGrid');
+  if(!grid) return;
+  grid.innerHTML = DATA.vehicles.map(v=>{
+    const cls = v.days_off===0?'full':v.days_off===1?'partial':'down';
+    const tooltip = `${v.plate} · ${v.type}\nUptime: ${v.uptime}% · Fermo: ${v.days_off}g`;
+    return `<div class="uptime-cell ${cls}" title="${tooltip}">${v.plate.slice(0,4)}</div>`;
+  }).join('');
+}
+
+function buildUptimeCharts(){
+  const withWs = DATA.vehicles.filter(v=>v.ws_count>0);
+  const types = {Tagliando:0,Revisione:0,Manutenzione:0};
+  withWs.forEach(v=>v.ws_types.forEach(t=>types[t]=(types[t]||0)+1));
+  mkChart('wsTypeChart',{
+    type:'doughnut',
+    data:{labels:Object.keys(types),datasets:[{data:Object.values(types),backgroundColor:[C.accent+'cc',C.fuel+'cc',C.fine+'cc'],borderColor:'#121826',borderWidth:2}]},
+    options:{...baseOpts,cutout:'60%',
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'bottom',labels:{color:C.text,font:{size:11},boxWidth:10}}}
+    }
+  });
+  const wsCosts = withWs.sort((a,b)=>b.workshop-a.workshop);
+  mkChart('wsCostChart',{
+    type:'bar',
+    data:{labels:wsCosts.map(v=>v.plate),datasets:[{
+      data:wsCosts.map(v=>v.workshop),
+      backgroundColor:wsCosts.map(v=>v.ws_types.includes('Manutenzione')?C.fine+'cc':v.ws_types.includes('Tagliando')?C.accent+'cc':C.fuel+'cc'),
+      borderRadius:4
+    }]},
+    options:{...baseOpts,indexAxis:'y',
+      plugins:{...baseOpts.plugins,tooltip:{...baseOpts.plugins.tooltip,callbacks:{title:c=>wsCosts[c[0].dataIndex].model,label:c=>`€ ${c.raw.toFixed(2)}`}}},
+      scales:{x:{...baseOpts.scales.x,ticks:{...baseOpts.scales.x.ticks,callback:v=>'€'+v}},y:{...baseOpts.scales.y}}
+    }
+  });
+}
+
+// ═══ CFO CHARTS ════════════════════════════════════════════════════
+function buildCFOCharts(){
+  mkChart('benchmarkChart',{
+    type:'bar',
+    data:{labels:['Leasing','Carburante','Officina','Multe/Extra'],datasets:[
+      {label:'Flotta (Q2 2025)',data:[54.0,42.0,3.6,0.4],backgroundColor:C.accent+'cc',borderRadius:4},
+      {label:'Benchmark settore',data:[55.0,35.0,7.5,2.5],backgroundColor:C.text+'44',borderRadius:4},
+    ]},
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{x:{...baseOpts.scales.x},y:{...baseOpts.scales.y,max:65,ticks:{...baseOpts.scales.y.ticks,callback:v=>v+'%'}}}
+    }
+  });
+
+  mkChart('projectionChart',{
+    type:'bar',
+    data:{
+      labels:['Q2 2025\n(reale)','Q3 2025\n(stima)','Q4 2025\n(stima)','Q1 2026\n(stima)'],
+      datasets:[
+        {label:'Leasing',data:[61.1,60.5,60.5,59.0],backgroundColor:C.lease+'cc',stack:'s'},
+        {label:'Carburante',data:[47.5,50.2,45.8,48.5],backgroundColor:C.fuel+'cc',stack:'s'},
+        {label:'Officina',data:[4.1,6.2,5.8,5.5],backgroundColor:C.ws+'cc',stack:'s'},
+        {label:'Altre voci',data:[3.9,3.5,3.2,3.0],backgroundColor:C.fine+'cc',stack:'s'},
+      ]
+    },
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{x:{...baseOpts.scales.x,stacked:true},y:{...baseOpts.scales.y,stacked:true,ticks:{...baseOpts.scales.y.ticks,callback:v=>'€'+v+'K'}}}
+    }
+  });
+
+  // Vintage: avg TCO by year
+  const years = [2019,2020,2021,2022];
+  const avgByYear = years.map(y=>{
+    const vv = DATA.vehicles.filter(v=>v.year===y);
+    return +(vv.reduce((a,v)=>a+v.tco,0)/vv.length).toFixed(0);
+  });
+  const avgCpkByYear = years.map(y=>{
+    const vv = DATA.vehicles.filter(v=>v.year===y);
+    return +(vv.reduce((a,v)=>a+v.cost_per_km,0)/vv.length).toFixed(1);
+  });
+  mkChart('vintageChart',{
+    type:'bar',
+    data:{labels:years.map(y=>`${y} (${DATA.vehicles.filter(v=>v.year===y).length} veic.)`),
+      datasets:[
+        {label:'TCO medio (€)',data:avgByYear,backgroundColor:C.accent2+'bb',borderRadius:4,yAxisID:'y'},
+        {label:'¢/km medio',data:avgCpkByYear,backgroundColor:C.fuel+'bb',borderRadius:4,yAxisID:'y1'},
+      ]
+    },
+    options:{...baseOpts,
+      plugins:{...baseOpts.plugins,legend:{display:true,position:'top',labels:{color:C.text,font:{size:11},boxWidth:10}}},
+      scales:{
+        x:{...baseOpts.scales.x},
+        y:{...baseOpts.scales.y,position:'left',ticks:{...baseOpts.scales.y.ticks,callback:v=>'€'+v}},
+        y1:{...baseOpts.scales.y,position:'right',grid:{display:false},ticks:{...baseOpts.scales.y.ticks,callback:v=>v+'¢'}},
+      }
+    }
+  });
+}
+
+// ═══ TABLE ═══════════════════════════════════════════════════════
+function filterTable(f, btn){
+  tableFilter = f;
+  document.querySelectorAll('#page-vehicles .filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderTable();
+}
+function sortTable(s){
+  tableSort_ = s;
+  document.getElementById('tableSort').value = s;
+  renderTable();
+}
+function renderTable(){
+  const search = (document.getElementById('tableSearch')?.value||'').toLowerCase();
+  let vv = DATA.vehicles.filter(v=>{
+    if(tableFilter==='Furgone'&&v.type!=='Furgone') return false;
+    if(tableFilter==='Auto'&&v.type!=='Auto') return false;
+    if(tableFilter==='fine'&&v.fine_count===0) return false;
+    if(tableFilter==='workshop'&&v.ws_count===0) return false;
+    if(tableFilter==='overmileage'&&v.extra_km===0) return false;
+    if(search&&!v.plate.toLowerCase().includes(search)&&!v.model.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  const [sk,sd] = tableSort_.split('-');
+  const dir = sd==='asc'?1:-1;
+  const keyMap = {tco:'tco',cpk:'cost_per_km',fuel:'fuel_q1',lease:'lease_total',fines:'fines',uptime:'uptime',plate:'plate'};
+  vv.sort((a,b)=>dir*(a[keyMap[sk]]>b[keyMap[sk]]?1:a[keyMap[sk]]<b[keyMap[sk]]?-1:0));
+  const maxTco = Math.max(...DATA.vehicles.map(v=>v.tco));
+  const tbody = document.getElementById('vehicleTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = vv.map(v=>{
+    const typeBadge = v.type==='Furgone'?'badge-furgone':'badge-auto';
+    let status = '<span class="badge badge-ok">✓ OK</span>';
+    if(v.fine_count>0) status += ` <span class="badge badge-danger">🚔 ${v.fine_count}× multa</span>`;
+    if(v.extra_km>0)   status += ` <span class="badge badge-warn">⚡ +km</span>`;
+    if(v.ws_count>0)   status += ` <span class="badge" style="background:rgba(168,85,247,.15);color:#c4b5fd">🔧 ${v.ws_types[0]}</span>`;
+    const cpkColor = v.cost_per_km>60?'#ef4444':v.cost_per_km>50?'#f97316':v.cost_per_km<30?'#00d4aa':'#e8edf5';
+    const barW = Math.round(v.tco/maxTco*80);
+    return `<tr>
+      <td class="mono" style="color:var(--accent)">${v.plate}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${v.model}</td>
+      <td><span class="badge ${typeBadge}">${v.type}</span></td>
+      <td class="mono">€ ${v.lease_total.toFixed(0)}</td>
+      <td class="mono">€ ${v.fuel_q1.toFixed(0)}</td>
+      <td class="mono">${v.workshop>0?'€ '+v.workshop.toFixed(0):'—'}</td>
+      <td class="mono" style="color:${v.fines>0?'#ef4444':'var(--text3)'}">${v.fines>0?'€ '+v.fines.toFixed(0):'—'}</td>
+      <td><div class="cost-bar-wrap"><div class="cost-bar" style="width:${barW}px"></div><span class="mono">€ ${v.tco.toFixed(0)}</span></div></td>
+      <td class="mono" style="color:${cpkColor}">${v.cost_per_km.toFixed(1)}¢</td>
+      <td class="mono">€ ${v.cost_per_month.toFixed(0)}</td>
+      <td class="mono" style="color:${v.uptime<99?'var(--warn)':'var(--accent)'}">${v.uptime}%</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══ NAVIGATION ════════════════════════════════════════════════════
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='ranking'&&chartsReady) setRankMetric(rankMetric);
+  if(id==='vehicles') renderTable();
+  if(id==='uptime'&&chartsReady){ buildUptimeGrid(); buildUptimeCharts(); }
+}
+</script>
+</body>
+</html>
